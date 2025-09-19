@@ -11,6 +11,9 @@ const corsOptions = {
 app.use(cors(corsOptions))
 app.use(express.json())
 
+// Tải file dist của React và dùng chung server
+app.use(express.static('dist'))
+
 let notes = [
   { id: "1", content: "HTML is easy", important: true },
   { id: "2", content: "Browser can execute only JavaScript", important: false },

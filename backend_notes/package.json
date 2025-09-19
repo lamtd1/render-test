@@ -6,13 +6,16 @@
     "start": "node index.js",
     "dev": "node --watch index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "echo 'No build step needed'"
+    "build:ui": "rm -rf dist && cd ../frontend_notes && npm run build && cp -r dist ../backend_notes",
+    "deploy:ui": "npm run build:ui && git add . && git commit -m uibuild && git push origin main"
+
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "static": "^2.0.0"
   }
 }
