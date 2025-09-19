@@ -11,7 +11,7 @@ const App = () => {
   const [notes, setNotes] = useState([])
   const [newNote, setNewNote] = useState('') 
   const [showAll, setShowAll] = useState(true)
-  const [errorMessage, setErrorMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState(null)
 
   useEffect(() => {
     noteService.getAll()
@@ -66,7 +66,7 @@ const App = () => {
   return (
     <div>
       <h1>Notes</h1>
-      {errorMessage === '' ? null : <Notification message={errorMessage}/>}
+      {errorMessage && <Notification message={errorMessage}/>}
       
       <div>
         <button onClick={() => setShowAll(!showAll)}>
