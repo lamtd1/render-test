@@ -20,12 +20,12 @@ const noteSchema = new mongoose.Schema({
 
 noteSchema.set('toJSON', {
   transform: (document, returnObject) => {
-    console.log("document: ", document)
-    console.log("return object: ", returnObject)
+    // console.log("document: ", document)
+    // console.log("return object: ", returnObject)
     returnObject.id = returnObject._id.toString()
     delete returnObject._id
     delete returnObject.__v
-    console.log("return object: ", returnObject)
+    // console.log("return object: ", returnObject)
   }
 })
 

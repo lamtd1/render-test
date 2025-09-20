@@ -12,15 +12,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 app.use(express.json())
-
 // Tải file dist của React và dùng chung server
 app.use(express.static('dist'))
-
-let notes = [
-  { id: "1", content: "HTML is easy", important: true },
-  { id: "2", content: "Browser can execute only JavaScript", important: false },
-  { id: "3", content: "GET and POST are the most important methods of HTTP protocol", important: true }
-]
 
 
 // get all
@@ -40,8 +33,14 @@ app.get('/api/notes/:id', (req, res) => {
 // delete
 app.delete('/api/notes/:id', (req, res) => {
   const id = req.params.id
-  notes = notes.filter(note => note.id !== id)
-  res.status(204).end()
+  Note.findByIdAndDelete(id).then(
+    deletedNote => {
+      if (!deletedNote) {
+        return res.status(404).json({error: "note not found"})
+      }
+      res.status(204).end()
+    }
+  )
 })
 
 const genId = () => String(Math.floor(Math.random() * 1000))
@@ -69,23 +68,25 @@ app.put('/api/notes/:id', (req, res) => {
     const id = req.params.id
     const note = req.body
 
-    const exists = notes.some(n => n.id === id);
-    if (!exists) {
-    return res.status(404).json({ err: 'note not found' });
-    }
+    const exists = Note.findById(id)
 
     if (!note.content) {
         return res.status(400).json({err: 'content missing'})
     }
 
     const updateNote = {
-        id: id,
         content: note.content,
         important: note.important ?? false
     }
 
-    notes = notes.map(note => note.id === id ? updateNote : note)
-    res.status(200).json(updateNote)
+    Note.findByIdAndUpdate(id, updateNote, {new: true, runValidators: true}).then(
+      updatedNote => {
+        if(!updatedNote) {
+          return res.status(404).json({ err: 'note not found' })
+        }
+        res.status(200).json(updatedNote)
+      }
+    )
 })
 
 const PORT = process.env.PORT
