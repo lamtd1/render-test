@@ -26,7 +26,15 @@ app.get('/api/notes', (request, response) => {
 // get with id
 app.get('/api/notes/:id', (req, res) => {
   Note.findById(req.params.id).then(note => {
-    res.json(note)
+    if(note) {
+      res.json(note)
+    } else {
+      res.status(404).end()
+    }
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).end()
   })
 })
 
