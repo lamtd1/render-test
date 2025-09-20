@@ -1,7 +1,8 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
-
+const Phone = require('./models/phone')
 const app = express()
 
 const json_parse = express.json()
@@ -21,9 +22,8 @@ morgan.token('body', function (req, res) {
     return ' '
 })
 
-app.use(morgan(':method :url :status :res[content-length] :response-time ms :body'))
-
 app.use(json_parse)
+app.use(morgan(':method :url :status :res[content-length] :response-time ms :body'))
 app.use(requestLogger)
 app.use(cors())
 app.use(express.static('dist'))
@@ -51,15 +51,15 @@ let persons = [
     }
 ]
 
-const genId = () => {
-    return String(Math.floor(Math.random() * 10000))
-}
+// const genId = () => {
+//     return String(Math.floor(Math.random() * 10000))
+// }
 
 
 const now = new Date()
 
 app.get('/api/persons', (req, res) => {
-    res.json(persons)
+    Phone.find({}).then(phones => res.json(phones))
 })
 
 app.get('/info', (req, res) => {
@@ -70,20 +70,22 @@ app.get('/info', (req, res) => {
 
 app.get('/api/persons/:id', (req, res) => {
     const id = req.params.id
-    const person = persons.find(person => person.id === id)
-    if (person) {
-        res.json(person)
-    }else {
-        res.status(404).end()
-    }
+    Phone.findById(id).then(
+        phone => res.json(phone)
+    )
 })
 
 app.delete('/api/persons/:id', (req, res) => {
     const id = req.params.id
-    persons = persons.filter(person => person.id !== id)
-    res.status(204).end()
-    }
-)
+      Phone.findByIdAndDelete(id).then(
+        deletedPhone => {
+          if (!deletedPhone) {
+            return res.status(404).json({error: "note not found"})
+          }
+          res.status(204).end()
+        }
+      )
+    })
 
 app.post('/api/persons', (req, res) => {
     const body = req.body
@@ -91,18 +93,20 @@ app.post('/api/persons', (req, res) => {
         return res.status(400).json({"err": 'missing name or body'})
     }
 
-    if (persons.some(person => person.name === body.name)){
-        return res.status(400).json({"err": "name must be unique"})
-    }
+    Phone.findOne({name: body.name}).then(existing => {
+        if(existing){
+            return res.status(400).json({ err: 'name must be unique' })
+        }
 
-    const newPerson = {
-        id: genId(),
-        name: body.name,
-        number: body.number
-    }
+        const newPerson = new Phone({
+            name: body.name,
+            number: body.number
+        })
 
-    persons = persons.concat(newPerson)
-    res.json(newPerson)
+        newPerson.save().then(savedPerson => res.json(savedPerson))
+    })
+
+
 
 })
 
