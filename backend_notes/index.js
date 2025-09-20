@@ -10,21 +10,18 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 }
 
+app.use(express.static('dist'))
 app.use(cors(corsOptions))
 app.use(express.json())
-// Tải file dist của React và dùng chung server
-app.use(express.static('dist'))
 
 
-// get all
 app.get('/api/notes', (request, response) => {
   Note.find({}).then(notes => {
     response.json(notes)
   })
 })
 
-// get with id
-app.get('/api/notes/:id', (req, res) => {
+app.get('/api/notes/:id', (req, res, next) => {
   Note.findById(req.params.id).then(note => {
     if(note) {
       res.json(note)
@@ -32,34 +29,25 @@ app.get('/api/notes/:id', (req, res) => {
       res.status(404).end()
     }
   })
-  .catch(err => {
-    console.log(err)
-    res.status(400).send({ error: 'malformatted id' })
-  })
+  .catch(err => next(err))
 })
 
-// delete
-app.delete('/api/notes/:id', (req, res) => {
-  const id = req.params.id
-  Note.findByIdAndDelete(id).then(
-    deletedNote => {
-      if (!deletedNote) {
-        return res.status(404).json({error: "note not found"})
+app.delete('/api/notes/:id', (req, res, next) => {
+  Note.findByIdAndDelete(req.params.id).then(
+    result => {
+      if(!result){
+        return res.status(404).json({err : "note not exists"})
+      } else {
+        return res.status(204).end()
       }
-      res.status(204).end()
+
     }
-  )
+  ).catch(err => next(err))
 })
 
-const genId = () => String(Math.floor(Math.random() * 1000))
 
-// post
-app.post('/api/notes', (request, response) => {
+app.post('/api/notes', (request, response, next) => {
   const body = request.body
-
-  if (!body.content) {
-    return response.status(400).json({ error: 'content missing' })
-  }
 
   const note = new Note({
     content: body.content,
@@ -68,34 +56,41 @@ app.post('/api/notes', (request, response) => {
 
   note.save().then(savedNote => {
     response.json(savedNote)
-  })
+  }).catch(err => next(err))
 })
 
-// put
-app.put('/api/notes/:id', (req, res) => {
-    const id = req.params.id
-    const note = req.body
+app.put('/api/notes/:id', (req, res, next) => {
+    const {content, important} = req.body
 
-    const exists = Note.findById(id)
-
-    if (!note.content) {
-        return res.status(400).json({err: 'content missing'})
-    }
-
-    const updateNote = {
-        content: note.content,
-        important: note.important ?? false
-    }
-
-    Note.findByIdAndUpdate(id, updateNote, {new: true, runValidators: true}).then(
-      updatedNote => {
-        if(!updatedNote) {
-          return res.status(404).json({ err: 'note not found' })
-        }
-        res.status(200).json(updatedNote)
+    Note.findById(req.params.id).then(note => {
+      if(!note){
+        return res.status(404).end()
       }
-    )
+
+      note.content = content
+      note.important = important
+
+      return note.save().then(updatedNote => res.json(updatedNote))
+    }).catch(err => next(err))
 })
+
+const unknownEndpoint = (req, res) => {
+    res.status(404).send({ error: 'unknown endpoint'})
+}
+
+app.use(unknownEndpoint)
+
+const errorHandler = (err, req, res, next) => {
+  console.log(err.message)
+  if (err.name === 'CastError') {
+    return res.status(404).send({error: "malformatted id"})
+  } else if(err.name === 'ValidationError') {
+    return res.status(404).json({error: err.message})
+  }
+  next(err)
+}
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
