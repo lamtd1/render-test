@@ -1,5 +1,7 @@
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
+const Note = require('./models/note')
 
 const app = express()
 
@@ -22,19 +24,19 @@ let notes = [
 
 
 // get all
-app.get('/api/notes', (req, res) => {
-  res.json(notes)
+app.get('/api/notes', (request, response) => {
+  Note.find({}).then(notes => {
+    response.json(notes)
+  })
 })
+
 // get with id
 app.get('/api/notes/:id', (req, res) => {
-  const id = req.params.id
-  const note = notes.find(note => note.id === id)
-  if (note) {
+  Note.findById(req.params.id).then(note => {
     res.json(note)
-  } else {
-    res.status(404).end()
-  }
+  })
 })
+
 // delete
 app.delete('/api/notes/:id', (req, res) => {
   const id = req.params.id
@@ -43,22 +45,25 @@ app.delete('/api/notes/:id', (req, res) => {
 })
 
 const genId = () => String(Math.floor(Math.random() * 1000))
+
 // post
-app.post('/api/notes', (req, res) => {
-  const note = req.body
-  if (!note.content) {
-    return res.status(400).json({ error: 'content missing' })
+app.post('/api/notes', (request, response) => {
+  const body = request.body
+
+  if (!body.content) {
+    return response.status(400).json({ error: 'content missing' })
   }
 
-  const newNote = {
-    id: genId(),
-    content: note.content,
-    important: false || note.important
-  }
+  const note = new Note({
+    content: body.content,
+    important: body.important || false,
+  })
 
-  notes = notes.concat(newNote)
-  res.status(201).json(newNote)
+  note.save().then(savedNote => {
+    response.json(savedNote)
+  })
 })
+
 // put
 app.put('/api/notes/:id', (req, res) => {
     const id = req.params.id
@@ -82,7 +87,8 @@ app.put('/api/notes/:id', (req, res) => {
     notes = notes.map(note => note.id === id ? updateNote : note)
     res.status(200).json(updateNote)
 })
-const PORT = process.env.PORT || 3001
+
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Run on ${PORT}`)
 })

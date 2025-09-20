@@ -8,13 +8,13 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:ui": "rm -rf dist && cd ../frontend_notes && npm run build && cp -r dist ../backend_notes",
     "deploy:ui": "npm run build:ui && git add . && git commit -m uibuild && git push origin main"
-
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "static": "^2.0.0"
   }
