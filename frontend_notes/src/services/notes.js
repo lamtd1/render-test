@@ -1,14 +1,10 @@
 import axios from 'axios'
-const baseUrl = 'http://localhost:5173/api/notes'
+// Sửa lại link để kết nối BE
+const baseUrl = '/api/notes'
 
 const getAll = () => {
     const request =  axios.get(baseUrl)
-    const nonExisting = {
-        id: 1000,
-        content: 'This is not saved to server',
-        important: true,
-    }
-    return request.then(resp => resp.data.concat(nonExisting))
+    return request.then(resp => resp.data)
 }
 
 const create = newObj => {

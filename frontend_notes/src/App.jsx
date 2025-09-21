@@ -33,6 +33,8 @@ const App = () => {
     .then(returnNote => {
       setNotes(notes.concat(returnNote))
       setNewNote('')
+    }).catch(err => {
+      setErrorMessage(err.response.data.error)
     })
   }
 
@@ -74,7 +76,7 @@ const App = () => {
         </button>
       </div>
       <ul>
-        {notesToShow.map(note => 
+        {!notesToShow ? null : notesToShow.map(note => 
           <Note key={note.id} note={note} toggleImportance={() => {toggleImportanceOf(note.id)}}/>
         )}
       </ul>
